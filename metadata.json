@@ -1,0 +1,6 @@
+{
+  "name": "智能餐飲點餐系統",
+  "description": "提供顧客線上點餐、餐點客製化、桌位選擇，以及店家後台即時接單與菜單管理的餐飲系統",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
