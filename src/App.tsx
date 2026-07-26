@@ -8,6 +8,9 @@ import { OrderTrackerModal } from './components/OrderTrackerModal';
 import { KitchenDashboard } from './components/KitchenDashboard';
 import { AdminPanel } from './components/AdminPanel';
 import { AiAssistantModal } from './components/AiAssistantModal';
+import { LateNightParticles } from './components/LateNightParticles';
+import { LiveReviewsMarquee } from './components/LiveReviewsMarquee';
+import { FlyingCartAnimation, FlyingParticle } from './components/FlyingCartAnimation';
 
 import {
   INITIAL_CATEGORIES,
@@ -33,6 +36,63 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTagFilter, setSelectedTagFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Late Night Bistro mode state
+  const [isLateNightMode, setIsLateNightMode] = useState<boolean>(() => {
+    return localStorage.getItem('app_late_night_mode') === 'true';
+  });
+
+  // Parabolic flying particles state
+  const [flyingParticles, setFlyingParticles] = useState<FlyingParticle[]>([]);
+
+  const triggerFlyAnimation = (e: React.MouseEvent | HTMLElement | undefined, image?: string) => {
+    let startX = window.innerWidth / 2;
+    let startY = window.innerHeight / 2;
+
+    if (e && 'clientX' in e) {
+      startX = e.clientX;
+      startY = e.clientY;
+    } else if (e && 'getBoundingClientRect' in e) {
+      const rect = (e as HTMLElement).getBoundingClientRect();
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+    }
+
+    const cartBtn = document.getElementById('cart-trigger-btn');
+    let endX = window.innerWidth - 60;
+    let endY = 30;
+
+    if (cartBtn) {
+      const cartRect = cartBtn.getBoundingClientRect();
+      endX = cartRect.left + cartRect.width / 2;
+      endY = cartRect.top + cartRect.height / 2;
+    }
+
+    const particle: FlyingParticle = {
+      id: Math.random().toString(36).substring(2, 9),
+      startX,
+      startY,
+      endX,
+      endY,
+      image,
+      startTime: Date.now(),
+    };
+
+    setFlyingParticles((prev) => [...prev, particle]);
+
+    setTimeout(() => {
+      if (cartBtn) {
+        cartBtn.classList.add('animate-bounce');
+        setTimeout(() => {
+          cartBtn.classList.remove('animate-bounce');
+        }, 500);
+      }
+    }, 650);
+  };
+
+  useEffect(() => {
+    localStorage.setItem('app_late_night_mode', String(isLateNightMode));
+  }, [isLateNightMode]);
 
   // Persistent state initialized from localStorage
   const [menuItems, setMenuItems] = useState<MenuItem[]>(() => {
@@ -74,8 +134,11 @@ export default function App() {
     quantity: number,
     selectedOptions: SelectedOption[],
     specialInstructions: string,
-    unitPrice: number
+    unitPrice: number,
+    e?: React.MouseEvent
   ) => {
+    triggerFlyAnimation(e, item.image);
+
     const cartItemId = `cart-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
     const newItem: CartItem = {
       cartItemId,
@@ -88,7 +151,14 @@ export default function App() {
     };
 
     setCartItems((prev) => [...prev, newItem]);
-    setIsCartOpen(true);
+  };
+
+  const handleSelectDish = (item: MenuItem, e?: React.MouseEvent) => {
+    if (item.optionGroups && item.optionGroups.length > 0) {
+      setSelectedDishForCustom(item);
+    } else {
+      handleAddToCart(item, 1, [], '', item.price, e);
+    }
   };
 
   const handleUpdateCartQuantity = (cartItemId: string, newQty: number) => {
@@ -195,7 +265,14 @@ export default function App() {
   const activeOrdersCount = orders.filter((o) => o.status !== 'completed' && o.status !== 'cancelled').length;
 
   return (
-    <div className="min-h-screen bg-amber-50/40 text-stone-900 font-sans flex flex-col selection:bg-amber-300 selection:text-amber-950">
+    <div className={`min-h-screen font-sans flex flex-col transition-colors duration-700 relative ${
+      isLateNightMode
+        ? 'bg-stone-950 text-amber-50 selection:bg-amber-400 selection:text-stone-950'
+        : 'bg-amber-50/40 text-stone-900 selection:bg-amber-300 selection:text-amber-950'
+    }`}>
+      {/* Ambient Floating Particle Effect in Late Night Bistro Mode */}
+      {isLateNightMode && <LateNightParticles />}
+
       {/* Top Navigation */}
       <Navbar
         activeTab={activeTab}
@@ -209,10 +286,12 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         activeOrdersCount={activeOrdersCount}
         onOpenOrderTracker={() => setIsOrderTrackerOpen(true)}
+        isLateNightMode={isLateNightMode}
+        setIsLateNightMode={setIsLateNightMode}
       />
 
       {/* Main Tab Views */}
-      <main className="flex-1 pb-16">
+      <main className="flex-1 pb-24 z-10">
         {activeTab === 'customer' && (
           <div>
             {/* Menu Category & Filter Bar */}
@@ -229,16 +308,26 @@ export default function App() {
             {/* Menu Items Grid */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
               {filteredMenuItems.length === 0 ? (
-                <div className="bg-white rounded-3xl p-12 text-center text-stone-400 space-y-2 border border-amber-100 shadow-2xs">
-                  <p className="font-bold text-base text-stone-700">找不到符合條件的美味餐點</p>
-                  <p className="text-xs text-stone-400">請嘗試更換搜尋關鍵字或分類標籤。</p>
+                <div className={`rounded-3xl p-12 text-center space-y-2 border shadow-2xs ${
+                  isLateNightMode
+                    ? 'bg-stone-900/80 border-amber-500/20 text-amber-200/60'
+                    : 'bg-white border-amber-100 text-stone-400'
+                }`}>
+                  <p className={`font-bold text-base ${isLateNightMode ? 'text-amber-100' : 'text-stone-700'}`}>
+                    找不到符合條件的美味餐點
+                  </p>
+                  <p className="text-xs">請嘗試更換搜尋關鍵字或分類標籤。</p>
                   <button
                     onClick={() => {
                       setSelectedCategory('all');
                       setSelectedTagFilter('all');
                       setSearchQuery('');
                     }}
-                    className="mt-2 text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1.5 rounded-lg"
+                    className={`mt-2 text-xs font-bold px-3 py-1.5 rounded-lg ${
+                      isLateNightMode
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30'
+                        : 'text-amber-800 bg-amber-100'
+                    }`}
                   >
                     重置所有篩選
                   </button>
@@ -249,7 +338,8 @@ export default function App() {
                     <MenuItemCard
                       key={item.id}
                       item={item}
-                      onSelect={(item) => setSelectedDishForCustom(item)}
+                      onSelect={(item, e) => handleSelectDish(item, e)}
+                      isLateNightMode={isLateNightMode}
                     />
                   ))}
                 </div>
@@ -314,6 +404,17 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Live Customer Feedback Marquee Ticker */}
+      <LiveReviewsMarquee isLateNightMode={isLateNightMode} />
+
+      {/* Flying Parabolic Cart Animation */}
+      <FlyingCartAnimation
+        particles={flyingParticles}
+        onParticleComplete={(id) =>
+          setFlyingParticles((prev) => prev.filter((p) => p.id !== id))
+        }
+      />
     </div>
   );
 }

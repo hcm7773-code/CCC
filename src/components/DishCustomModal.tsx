@@ -10,7 +10,8 @@ interface DishCustomModalProps {
     quantity: number,
     selectedOptions: SelectedOption[],
     specialInstructions: string,
-    unitPrice: number
+    unitPrice: number,
+    e?: React.MouseEvent
   ) => void;
 }
 
@@ -115,7 +116,7 @@ export const DishCustomModal: React.FC<DishCustomModalProps> = ({
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e?: React.MouseEvent) => {
     // Validate required groups
     if (item.optionGroups) {
       for (const group of item.optionGroups) {
@@ -131,7 +132,7 @@ export const DishCustomModal: React.FC<DishCustomModalProps> = ({
       allOptions.push(...list);
     });
 
-    onAddToCart(item, quantity, allOptions, specialInstructions, unitPrice);
+    onAddToCart(item, quantity, allOptions, specialInstructions, unitPrice, e);
     onClose();
   };
 
@@ -271,8 +272,8 @@ export const DishCustomModal: React.FC<DishCustomModalProps> = ({
           </div>
 
           <button
-            onClick={handleSubmit}
-            className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-amber-950 font-extrabold py-3 rounded-2xl shadow-md transition-all active:scale-98"
+            onClick={(e) => handleSubmit(e)}
+            className="flex-1 flex items-center justify-center space-x-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-amber-950 font-extrabold py-3 rounded-2xl shadow-md transition-all active:scale-98 cursor-pointer"
           >
             <ShoppingBag className="w-5 h-5" />
             <span>加入購物車 NT${totalPrice}</span>

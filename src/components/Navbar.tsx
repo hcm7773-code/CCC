@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, Utensils, ChefHat, Store, Bot, Clock } from 'lucide-react';
+import { ShoppingBag, Utensils, ChefHat, Store, Bot, Clock, Sparkles, Moon, Sun } from 'lucide-react';
 import { OrderType } from '../types';
 
 interface NavbarProps {
@@ -14,6 +14,8 @@ interface NavbarProps {
   onOpenCart: () => void;
   activeOrdersCount: number;
   onOpenOrderTracker: () => void;
+  isLateNightMode: boolean;
+  setIsLateNightMode: (val: boolean) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -28,26 +30,49 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCart,
   activeOrdersCount,
   onOpenOrderTracker,
+  isLateNightMode,
+  setIsLateNightMode,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-amber-950/95 backdrop-blur-md text-amber-50 shadow-md border-b border-amber-900/40">
+    <header className={`sticky top-0 z-40 backdrop-blur-md transition-all duration-500 shadow-md ${
+      isLateNightMode
+        ? 'bg-stone-950/95 text-amber-100 border-b border-amber-500/40 shadow-[0_4px_20px_rgba(245,158,11,0.15)]'
+        : 'bg-amber-950/95 text-amber-50 border-b border-amber-900/40'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Logo & Name */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('customer')}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-400 flex items-center justify-center text-amber-950 font-bold text-xl shadow-lg shadow-amber-500/20">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xl shadow-lg transition-all ${
+              isLateNightMode
+                ? 'bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 text-stone-950 shadow-amber-500/40 ring-1 ring-amber-300'
+                : 'bg-gradient-to-tr from-amber-500 to-amber-400 text-amber-950 shadow-amber-500/20'
+            }`}>
               <Utensils className="w-5 h-5 text-amber-950" />
             </div>
             <div>
               <h1 className="font-extrabold text-lg sm:text-xl tracking-tight text-amber-100 flex items-center gap-2">
-                饗食智點 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-normal border border-amber-500/30">智慧點餐</span>
+                饗食智點{' '}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-normal border transition-all ${
+                  isLateNightMode
+                    ? 'bg-amber-400/20 text-amber-300 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                }`}>
+                  {isLateNightMode ? '✨ 深夜食堂模式' : '智慧點餐'}
+                </span>
               </h1>
-              <p className="text-xs text-amber-300/80 hidden sm:block">極致順暢的現代餐飲體驗</p>
+              <p className="text-xs text-amber-300/80 hidden sm:block">
+                {isLateNightMode ? '微光巡夜，極致奢華金屬饗宴' : '極致順暢的現代餐飲體驗'}
+              </p>
             </div>
           </div>
 
           {/* Center: Mode Switching Tabs */}
-          <div className="hidden md:flex items-center bg-amber-900/60 p-1 rounded-xl border border-amber-800/50">
+          <div className={`hidden md:flex items-center p-1 rounded-xl border transition-all ${
+            isLateNightMode
+              ? 'bg-stone-900/90 border-amber-500/30'
+              : 'bg-amber-900/60 border-amber-800/50'
+          }`}>
             <button
               id="tab-customer-btn"
               onClick={() => setActiveTab('customer')}
@@ -103,6 +128,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Bar */}
           <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* Top Right: Late Night Bistro Toggle */}
+            <button
+              id="late-night-toggle-btn"
+              onClick={() => setIsLateNightMode(!isLateNightMode)}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 shadow-md active:scale-95 border cursor-pointer ${
+                isLateNightMode
+                  ? 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-stone-950 border-amber-200 shadow-[0_0_18px_rgba(245,158,11,0.5)] ring-2 ring-amber-400/50'
+                  : 'bg-amber-900/60 hover:bg-amber-800/80 text-amber-200 border-amber-700/60'
+              }`}
+              title={isLateNightMode ? '切換為日間一般模式' : '開啟深夜食堂（奢華金屬玻璃主題）'}
+            >
+              {isLateNightMode ? (
+                <>
+                  <Sparkles className="w-4 h-4 text-amber-950 animate-spin" style={{ animationDuration: '6s' }} />
+                  <span className="font-extrabold text-amber-950">深夜食堂</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-amber-300" />
+                  <span className="hidden sm:inline font-bold">深夜食堂</span>
+                </>
+              )}
+            </button>
+
             {activeTab === 'customer' && (
               <>
                 {/* Dine-in vs Takeout Switcher */}

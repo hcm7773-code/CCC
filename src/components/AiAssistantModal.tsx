@@ -42,16 +42,62 @@ export const AiAssistantModal: React.FC<AiAssistantModalProps> = ({
         }),
       });
 
-      const data = await response.json();
+      let data;
+      if (response.ok) {
+        data = await response.json();
+        setRecommendationResult(data.recommendation);
+      } else {
+        // Fallback to client-side smart recommendation engine for static hosting (e.g. GitHub Pages)
+        const budgetNum = budget ? Number(budget) : 300;
+        const peopleNum = peopleCount ? Number(peopleCount) : 1;
+        const prefLower = (preference || '').toLowerCase();
 
-      if (!response.ok) {
-        throw new Error(data.error || '無法取得 AI 建議');
+        // Pick items fitting budget and preferences
+        const matchedItems = menuItems.filter(item => item.isAvailable);
+        let selectedDishes: MenuItem[] = [];
+        let currentTotal = 0;
+
+        // Try to match category/tags
+        const mainDishes = matchedItems.filter(i => i.category === 'mains' || i.category === 'noodles');
+        const sideDishes = matchedItems.filter(i => i.category === 'sides');
+        const drinks = matchedItems.filter(i => i.category === 'drinks');
+
+        if (mainDishes.length > 0) {
+          const main = mainDishes.find(i => prefLower && (i.name.toLowerCase().includes(prefLower) || i.description.toLowerCase().includes(prefLower))) || mainDishes[0];
+          selectedDishes.push(main);
+          currentTotal += main.price;
+        }
+
+        if (drinks.length > 0 && currentTotal + drinks[0].price <= budgetNum) {
+          selectedDishes.push(drinks[0]);
+          currentTotal += drinks[0].price;
+        }
+
+        if (sideDishes.length > 0 && currentTotal + sideDishes[0].price <= budgetNum) {
+          selectedDishes.push(sideDishes[0]);
+          currentTotal += sideDishes[0].price;
+        }
+
+        if (selectedDishes.length === 0) {
+          selectedDishes = matchedItems.slice(0, 2);
+          currentTotal = selectedDishes.reduce((a, b) => a + b.price, 0);
+        }
+
+        const fallbackText = `💡 【阿達師 GitHub Pages 靜態體驗專屬建議】\n\n根據您的需求（${peopleNum} 人用餐 / 預算約 NT$ ${budgetNum} / 偏好：「${preference || '精選美食'}」），推薦以下餐點：\n\n` +
+          selectedDishes.map((d, idx) => `${idx + 1}. **${d.name}** - NT$ ${d.price}\n   └ ${d.description.slice(0, 40)}...`).join('\n\n') +
+          `\n\n💰 **預估總金額：NT$ ${currentTotal}**\n\n✨ 祝您用餐愉快！如果有需要調整辣度或冰量，可在點餐時自由選擇選項哦！`;
+
+        setRecommendationResult(fallbackText);
       }
-
-      setRecommendationResult(data.recommendation);
     } catch (err: any) {
       console.error(err);
-      setErrorMsg(err?.message || '點餐大師連線異常，請稍後再試。');
+      // Fallback response for offline or CORS or 404 static hosting
+      const budgetNum = budget ? Number(budget) : 300;
+      const matched = menuItems.filter(i => i.price <= budgetNum && i.isAvailable).slice(0, 3);
+      const fallbackText = `💡 【阿達師 智慧點餐建議】\n\n為您挑選了適合預算 NT$ ${budgetNum} 的人氣美味：\n\n` +
+        matched.map((d, idx) => `${idx + 1}. **${d.name}** - NT$ ${d.price}\n   └ ${d.description}`).join('\n\n') +
+        `\n\n✨ 請到選單加入購物車享用！`;
+      setRecommendationResult(fallbackText);
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Trash2, Plus, Minus, ShoppingBag, CreditCard, Banknote, Smartphone, Utensils } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag, CreditCard, Banknote, Smartphone, Utensils, Sparkles } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { CartItem, OrderType, PaymentMethod } from '../types';
 
 interface CartDrawerProps {
@@ -51,6 +52,35 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     if (orderType === 'takeout' && !customerPhone) {
       alert('外帶請輸入聯絡電話，以便餐點做好時通知！');
       return;
+    }
+
+    // Fire celebratory confetti canon explosion!
+    try {
+      // Main burst
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#f59e0b', '#fbbf24', '#ef4444', '#10b981', '#3b82f6', '#ec4899', '#8b5cf6'],
+      });
+
+      // Secondary side cannons
+      setTimeout(() => {
+        confetti({
+          particleCount: 60,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0, y: 0.7 },
+        });
+        confetti({
+          particleCount: 60,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.7 },
+        });
+      }, 200);
+    } catch (err) {
+      console.error('Confetti trigger error:', err);
     }
 
     onSubmitOrder(customerName, customerPhone, paymentMethod, orderNotes);
